@@ -1,12 +1,12 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-
+from face_routes import router as face_router
 from database import get_db
 
 
 app = FastAPI()
-
+app.include_router(face_router)
 
 @app.get("/")
 def home():
