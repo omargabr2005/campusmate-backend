@@ -39,6 +39,8 @@ def get_group_schedule(
     db: Session = Depends(get_db)
 ):
 
+    # PostgreSQL has no FIELD(); a CASE expression gives the same day order.
+    # Room comes from the rooms table when set, otherwise from the old text column.
     query = text("""
         SELECT
             sc.schedule_id,
@@ -47,23 +49,30 @@ def get_group_schedule(
             sc.end_time,
             c.course_code,
             c.course_name,
-            sc.room,
+            COALESCE(r.room_code, sc.room) AS room,
+            f.floor_number,
+            b.building_name,
             sc.session_type,
             sc.semester
         FROM Schedule sc
         JOIN Courses c
             ON sc.course_id = c.course_id
+        LEFT JOIN rooms r
+            ON sc.room_id = r.room_id
+        LEFT JOIN floors f
+            ON r.floor_id = f.floor_id
+        LEFT JOIN buildings b
+            ON f.building_id = b.building_id
         WHERE sc.group_id = :group_id
         ORDER BY
-            FIELD(
-                sc.day_of_week,
-                'Saturday',
-                'Sunday',
-                'Monday',
-                'Tuesday',
-                'Wednesday',
-                'Thursday'
-            ),
+            CASE sc.day_of_week
+                WHEN 'Saturday' THEN 1
+                WHEN 'Sunday' THEN 2
+                WHEN 'Monday' THEN 3
+                WHEN 'Tuesday' THEN 4
+                WHEN 'Wednesday' THEN 5
+                WHEN 'Thursday' THEN 6
+            END,
             sc.start_time
     """)
 
