@@ -3,7 +3,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from face_routes import router as face_router
 from database import get_db
-
+from auth import router as auth_router
+from advisor_routes import router as advisor_router
 
 app = FastAPI()
 app.include_router(face_router)
@@ -105,3 +106,8 @@ def get_staff(db: Session = Depends(get_db)):
     staff = result.mappings().all()
 
     return staff
+
+app = FastAPI()
+app.include_router(face_router)
+app.include_router(auth_router)
+app.include_router(advisor_router)
